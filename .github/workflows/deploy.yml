@@ -1,0 +1,43 @@
+# Deploy tagged releases.
+
+name:  Deploy Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+# This is for debugging.
+# on:
+#   push:
+#     branches: [ master ]
+#   pull_request:
+#     branches: [ master ]
+
+env:
+  TWINE_USERNAME: __token__
+  TWINE_PASSWORD: ${{ secrets.TWINE_TOKEN }}
+
+jobs:
+  wheels:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Install Dependencies
+      run: pip install twine
+    - name: Install Package
+      run: pip install .
+    - name: Run Tests
+      run: python -c 'import litebirdtask.test; litebirdtask.test.run()'
+    - name: Build source package
+      run: rm -rf dist && python setup.py sdist
+    - name: Build wheels
+      run: mkdir -p wheelhouse && pip wheel -w wheelhouse .
+    - name: Upload to PyPI
+      run: |
+        python -m twine upload dist/*.tar.gz && python -m twine upload wheelhouse/litebirdtask*.whl
