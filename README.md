@@ -5,8 +5,9 @@ This package provides tools for simulation and analysis of LiteBIRD data within 
 
 ## Required Inputs
 
-This repository contains no private information about LiteBIRD.  Before using these
-tools you must [download a model of the instrument from this page](https://wiki.kek.jp/display/cmb)
+This repository contains no private information about LiteBIRD.  You should [visit the
+official wiki page here](https://wiki.kek.jp/display/cmb) and download the required
+files for use with this package.
 
 ## Installation
 
