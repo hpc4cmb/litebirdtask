@@ -32,6 +32,63 @@ from toast.ops.sim_satellite import satellite_scanning, SimSatellite
 import litebirdtask as lbt
 
 
+class LitebirdFocalplane(Focalplane):
+    """Toast focalplane which uses a LiteBIRD model.
+
+    The Focalplane class represents detectors for one observation.  These detectors
+    must be co-sampled.
+
+    Args:
+        hw (litebirdtask.Hardware):  A hardware model containing detectors at a single
+            sample rate.
+
+    """
+
+    def __init__(self, hw):
+        # Store a reference to the input model
+        self.hw = hw
+        # Get the mapping from wafer to other properties
+        wafermap = hw.wafer_map()
+        # Build the detector properties needed by toast and verify consistent
+        # sampling rates.
+        detdata = dict()
+        rate = None
+        for dname, props in hw.data["detectors"].items():
+            # wafer for this det
+            wafername = props["wafer"]
+            # wafer props
+            wafer = hw.data["wafers"][wafername]
+            # telescope for this det
+            telename = wafermap["telescopes"][wafername]
+            # telescope props
+            tele = hw.data["telescopes"][telename]
+            if rate is None:
+                rate = tele["samplerate"]
+            else:
+                if rate != tele["samplerate"]:
+                    raise RuntimeError(
+                        "Focalplane detectors must have the same sample rate"
+                    )
+            d = dict()
+            d["quat"] = props["quat"]
+
+            # We do not yet use a value for cross polar response
+            d["pol_leakage"] = 0.0
+
+            # Nominal value
+            d["fwhm_arcmin"] = wafermap["bands"][wafername]["fwhm"]
+
+            # Nominal noise properties
+            d["fmin"] = wafermap["bands"][wafername]["fmin"]
+            d["fknee"] = wafermap["bands"][wafername]["fknee"]
+            d["alpha"] = wafermap["bands"][wafername]["alpha"]
+            d["NET"] = wafermap["bands"][wafername]["NET"]
+
+            detdata[dname] = d
+
+        super().__init__(detector_data=detdata, sample_rate=rate)
+
+
 @trait_docs
 class SimScan(Operator):
     """Simulate satellite scanning.
@@ -136,7 +193,7 @@ class SimScan(Operator):
 
             site = SpaceSite("L2")
 
-            focalplane = Focalplane()
+            focalplane = LitebirdFocalplane(self.hardware)
 
             telescope = Telescope("LiteBIRD", focalplane=focalplane, site=site)
 
