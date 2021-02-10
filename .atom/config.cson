@@ -1,0 +1,15 @@
+"*":
+  "atom-beautify":
+    python: {}
+  editor:
+    autoIndentOnPaste: false
+    preferredLineLength: 88
+    scrollPastEnd: true
+    showInvisibles: true
+    softWrap: true
+    softWrapAtPreferredLineLength: true
+    tabLength: 4
+    tabType: "soft"
+  "python-black":
+    fmtOnSave: true
+    lineLength: 88
