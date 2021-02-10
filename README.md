@@ -28,9 +28,14 @@ Within this virtualenv, update pip to the latest version:
 
     python3 -m pip install --upgrade pip
 
-Next, use pip to install this package and its requirements:
+Now you can choose whether to install the latest stable version of the package from
+PyPI, or to install from a git checkout.  To install a stable version, do:
 
     pip install litebirdtask
+
+*OR*, from your git checkout of `litebirdtask`, do:
+
+    pip install .
 
 If you wish to use other tools in this environment, you can install them now with pip.
 To "unload" this environment just do:
