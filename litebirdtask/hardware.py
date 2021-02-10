@@ -223,6 +223,7 @@ class Hardware(object):
         # Copy this data
         hw = Hardware()
         hw.data = OrderedDict()
+        hw.data["software"] = copy.deepcopy(self.data["software"])
         for k, v in wafermap.items():
             hw.data[k] = OrderedDict()
             tocopy = set()
