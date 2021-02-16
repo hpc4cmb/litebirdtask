@@ -6,6 +6,7 @@ import traitlets
 import numpy as np
 
 from astropy import units as u
+from astropy.table import Column, QTable
 
 import toast.qarray as qa
 
@@ -15,9 +16,7 @@ from toast.utils import Environment, name_UID, Logger, rate_from_times
 
 from toast.dist import distribute_discrete
 
-from ..timing import function_timer, Timer
-
-from ..intervals import Interval
+from toast.timing import function_timer, Timer
 
 from toast.schedule import SatelliteSchedule
 
@@ -25,11 +24,11 @@ from toast import Observation, Telescope, Focalplane, SpaceSite
 
 from toast.ops import Operator
 
-from toast.ops import simulate_hwp_response
+from toast.ops.sim_hwp import simulate_hwp_response
 
 from toast.ops.sim_satellite import satellite_scanning, SimSatellite
 
-import litebirdtask as lbt
+from ..hardware import Hardware
 
 
 class LitebirdFocalplane(Focalplane):
@@ -47,13 +46,36 @@ class LitebirdFocalplane(Focalplane):
     def __init__(self, hw):
         # Store a reference to the input model
         self.hw = hw
+
         # Get the mapping from wafer to other properties
         wafermap = hw.wafer_map()
+
         # Build the detector properties needed by toast and verify consistent
         # sampling rates.
-        detdata = dict()
+
+        n_det = len(hw.data["detectors"])
+        det_table = QTable(
+            [
+                Column(name="name", data=[x for x in hw.data["detectors"].keys()]),
+                Column(
+                    name="quat",
+                    data=[p["quat"] for x, p in hw.data["detectors"].items()],
+                ),
+                Column(name="pol_leakage", length=n_det, unit=None),
+                Column(name="fwhm", length=n_det, unit=u.arcmin),
+                Column(name="psd_fmin", length=n_det, unit=u.Hz),
+                Column(name="psd_fknee", length=n_det, unit=u.Hz),
+                Column(name="psd_alpha", length=n_det, unit=None),
+                Column(
+                    name="psd_net", length=n_det, unit=(u.K * np.sqrt(1.0 * u.second))
+                ),
+                Column(name="bandcenter", length=n_det, unit=u.GHz),
+                Column(name="bandwidth", length=n_det, unit=u.GHz),
+            ]
+        )
+
         rate = None
-        for dname, props in hw.data["detectors"].items():
+        for row, (dname, props) in enumerate(hw.data["detectors"].items()):
             # wafer for this det
             wafername = props["wafer"]
             # wafer props
@@ -69,24 +91,21 @@ class LitebirdFocalplane(Focalplane):
                     raise RuntimeError(
                         "Focalplane detectors must have the same sample rate"
                     )
-            d = dict()
-            d["quat"] = props["quat"]
+            band = props["band"]
+            bprops = hw.data["bands"][band]
 
-            # We do not yet use a value for cross polar response
-            d["pol_leakage"] = 0.0
+            det_table[row]["pol_leakage"] = 0.0
+            det_table[row]["fwhm"] = bprops["fwhm"] * u.arcmin
+            det_table[row]["psd_fmin"] = bprops["fmin"] * u.Hz
+            det_table[row]["psd_fknee"] = bprops["fknee"] * u.Hz
+            det_table[row]["psd_alpha"] = bprops["alpha"]
+            det_table[row]["psd_net"] = (
+                1.0e-6 * bprops["NET"] * u.K * np.sqrt(1.0 * u.second)
+            )
+            det_table[row]["bandcenter"] = bprops["center"] * u.GHz
+            det_table[row]["bandwidth"] = bprops["bandwidth"] * u.GHz
 
-            # Nominal value
-            d["fwhm_arcmin"] = wafermap["bands"][wafername]["fwhm"]
-
-            # Nominal noise properties
-            d["fmin"] = wafermap["bands"][wafername]["fmin"]
-            d["fknee"] = wafermap["bands"][wafername]["fknee"]
-            d["alpha"] = wafermap["bands"][wafername]["alpha"]
-            d["NET"] = wafermap["bands"][wafername]["NET"]
-
-            detdata[dname] = d
-
-        super().__init__(detector_data=detdata, sample_rate=rate)
+        super().__init__(detector_data=det_table, sample_rate=rate * u.Hz)
 
 
 @trait_docs
@@ -103,18 +122,18 @@ class SimScan(Operator):
 
     API = Int(0, help="Internal interface version for this operator")
 
-    hardware = Instance(klass=lbt.Hardware, allow_none=True, help="The hardware model")
+    hardware = Instance(klass=Hardware, allow_none=True, help="The hardware model")
 
     schedule = Instance(
         klass=SatelliteSchedule, allow_none=True, help="Instance of a SatelliteSchedule"
     )
 
     spin_angle = Quantity(
-        30.0 * u.degree, help="The opening angle of the boresight from the spin axis"
+        50.0 * u.degree, help="The opening angle of the boresight from the spin axis"
     )
 
     prec_angle = Quantity(
-        65.0 * u.degree,
+        45.0 * u.degree,
         help="The opening angle of the spin axis from the precession axis",
     )
 
@@ -149,7 +168,7 @@ class SimScan(Operator):
     def _check_hardware(self, proposal):
         hw = proposal["value"]
         if hw is not None:
-            if not isinstance(hw, lbt.Hardware):
+            if not isinstance(hw, Hardware):
                 raise traitlets.TraitError(
                     "hardware must be a litebirdtask.Hardware instance"
                 )

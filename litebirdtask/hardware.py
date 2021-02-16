@@ -143,7 +143,7 @@ class Hardware(object):
             (recall the "." matches a single character)::
 
                 new = hw.select(match={"wafer": ["L00", "L01"],
-                                "band": "*040",
+                                "band": ".*040",
                                 "pol": "A",
                                 "pixel": "00."})
 

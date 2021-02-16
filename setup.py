@@ -21,7 +21,7 @@ setup(
     author="LiteBIRD Collaboration",
     author_email="tskisner.public@gmail.com",
     url="https://github.com/hpc4cmb/litebirdtask",
-    packages=find_packages(),
+    packages=find_packages(where="."),
     entry_points={
         "console_scripts": [
             "lbt_hardware_plot = litebirdtask.scripts.hardware_plot:main",
@@ -32,10 +32,7 @@ setup(
     license="BSD",
     python_requires=">=3.6.0",
     setup_requires=["wheel"],
-    install_requires=[
-        "toml",
-        "toast-cmb"
-    ],
+    install_requires=["toml", "toast-cmb"],
     cmdclass=versioneer.get_cmdclass(),
     classifiers=[
         "Development Status :: 4 - Beta",

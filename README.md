@@ -1,12 +1,14 @@
 # LiteBIRD TOAST Analysis and Simulation Kit
 
+**WARNING:  THIS PACKAGE IS NOT YET RELEASED OR READY.**  There will be communication to the mailing lists and [updates on the wiki page](https://wiki.kek.jp/pages/viewpage.action?pageId=150667506) when it is.
+
 This package provides tools for simulation and analysis of LiteBIRD data within the
 [TOAST](https://github.com/hpc4cmb/toast) framework.
 
 ## Required Inputs
 
 This repository contains no private information about LiteBIRD.  You should [visit the
-official wiki page here](https://wiki.kek.jp/display/cmb) and download the required
+official wiki page here](https://wiki.kek.jp/pages/viewpage.action?pageId=150667506) and download the required
 files for use with this package.
 
 ## Installation
