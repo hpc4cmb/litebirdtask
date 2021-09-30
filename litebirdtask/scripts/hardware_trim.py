@@ -12,7 +12,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="This program reads a hardware model from disk,\
             selects a subset of detectors, and writes the new model out.",
-        usage="lb_hardware_trim [options] (use --help for details)",
+        usage="lbt_hardware_trim [options] (use --help for details)",
     )
 
     parser.add_argument(

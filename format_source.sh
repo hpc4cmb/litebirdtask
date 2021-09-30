@@ -22,11 +22,11 @@ blkrun="-l 88"
 # Black test options
 blktest="--check"
 
-# Directories to process
-pydirs="litebirdms"
+# Note that the "+" argument to "find ... -exec" below passes all found files to the
+# exec command in one go.  This works because black accept multiple files as arguments.
 
-# Run
+find "${base}/litebirdtask" -name "*.py" -and -not \
+    -path '*/_version.py' -exec ${blkexe} ${blkrun} '{}' + &
 
-for pyd in ${pydirs}; do
-    find "${base}/${pyd}" -name "*.py" -exec ${blkexe} ${blkrun} '{}' \;
-done
+# Wait for multiple commands to finish
+wait

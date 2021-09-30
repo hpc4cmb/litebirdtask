@@ -15,7 +15,7 @@ def main():
         description="This program reads a hardware model and plots the\
             detectors.  Note that you should pre-select detectors before\
             passing a hardware model to this function.  See lb_hardware_trim.",
-        usage="lb_hardware_plot [options] (use --help for details)",
+        usage="lbt_hardware_plot [options] (use --help for details)",
     )
 
     parser.add_argument(

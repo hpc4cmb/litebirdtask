@@ -14,7 +14,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="This program reads a hardware model and prints some\
             summary text to the terminal.",
-        usage="lb_hardware_info [hardware file, [hardware_file]] ...",
+        usage="lbt_hardware_info [hardware file, [hardware_file]] ...",
     )
 
     parser.add_argument("hardware", type=str, nargs="+", help="Input hardware file")

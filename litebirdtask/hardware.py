@@ -13,6 +13,16 @@ import gzip
 
 import toml
 
+import numpy as np
+
+from astropy import units as u
+
+from astropy.table import QTable, Column
+
+from toast.instrument import Focalplane
+
+from toast.utils import Logger
+
 
 class Hardware(object):
     """Class representing a specific hardware configuration.
@@ -245,3 +255,110 @@ class Hardware(object):
         hw.data["detectors"] = newdets
 
         return hw
+
+    def focalplane(self):
+        """Return a TOAST compatible Focalplane.
+
+        NOTE: this method should be used after you have a Hardware instance with
+        a selection of detectors you want to use for a single TOAST Observation.
+        All detectors must have the same sample rate and (likely) the same band.
+
+        Returns:
+            (Focalplane):  The object constructed from hardware properties.
+
+        """
+        log = Logger.get()
+        det_names = list(self.data["detectors"].keys())
+        n_det = len(det_names)
+
+        rate_check = set()
+        band_check = set()
+
+        det_table = QTable(
+            [
+                Column(name="name", length=n_det, dtype="S16", unit=None),
+                Column(
+                    name="quat",
+                    length=n_det,
+                    dtype=np.float64,
+                    shape=(4,),
+                    unit=None,
+                ),
+                Column(name="pol_leakage", length=n_det, dtype=np.float64, unit=None),
+                Column(name="fwhm", length=n_det, dtype=np.float64, unit=u.arcmin),
+                Column(name="psd_fmin", length=n_det, dtype=np.float64, unit=u.Hz),
+                Column(name="psd_fknee", length=n_det, dtype=np.float64, unit=u.Hz),
+                Column(name="psd_alpha", length=n_det, dtype=np.float64, unit=None),
+                Column(
+                    name="psd_net",
+                    length=n_det,
+                    dtype=np.float64,
+                    unit=(u.K * np.sqrt(1.0 * u.second)),
+                ),
+                Column(name="bandcenter", length=n_det, dtype=np.float64, unit=u.GHz),
+                Column(name="bandwidth", length=n_det, dtype=np.float64, unit=u.GHz),
+                Column(name="pixel", length=n_det, dtype="S4", unit=None),
+                Column(name="pixtype", length=n_det, dtype="S4", unit=None),
+                Column(name="wafer", length=n_det, dtype="S4", unit=None),
+                Column(name="telescope", length=n_det, dtype="S4", unit=None),
+                Column(name="band", length=n_det, dtype="S7", unit=None),
+                Column(name="pol", length=n_det, dtype="S2", unit=None),
+                Column(name="handed", length=n_det, dtype="S2", unit=None),
+                Column(name="orient", length=n_det, dtype="S2", unit=None),
+                Column(name="uid", length=n_det, dtype=np.uint64, unit=None),
+            ]
+        )
+
+        for idet, dname in enumerate(det_names):
+            # Set detector props
+            dprops = self.data["detectors"][dname]
+            det_table["name"][idet] = dname
+            det_table["quat"][idet][:] = dprops["quat"]
+            det_table["pixel"][idet] = dprops["pixel"]
+            det_table["pixtype"][idet] = dprops["pixtype"]
+            det_table["wafer"][idet] = dprops["wafer"]
+            det_table["band"][idet] = dprops["band"]
+            det_table["pol"][idet] = dprops["pol"]
+            if "handed" in dprops:
+                det_table["handed"][idet] = dprops["handed"]
+            else:
+                det_table["handed"][idet] = "NA"
+            det_table["orient"][idet] = dprops["orient"]
+            det_table["uid"][idet] = dprops["UID"]
+
+            # Get other props
+            wprops = self.data["wafers"][dprops["wafer"]]
+            pprops = self.data["pixels"][dprops["pixtype"]]
+            band_check.add(dprops["band"])
+            bprops = self.data["bands"][dprops["band"]]
+
+            tele = wprops["telescope"]
+            det_table["telescope"][idet] = tele
+            rate_check.add(self.data["telescopes"][tele]["samplerate"])
+
+            det_table["fwhm"][idet] = bprops["fwhm"] * u.arcmin
+            det_table["bandcenter"][idet] = bprops["center"] * u.GHz
+            det_table["bandwidth"][idet] = bprops["bandwidth"] * u.GHz
+            det_table["psd_fmin"][idet] = bprops["fmin"] * 0.001 * u.Hz
+            det_table["psd_fknee"][idet] = bprops["fknee"] * 0.001 * u.Hz
+            det_table["psd_alpha"][idet] = bprops["alpha"]
+            det_table["psd_net"][idet] = bprops["NET"] * (u.K * np.sqrt(1.0 * u.second))
+
+        if len(rate_check) > 1:
+            msg = "Hardware instance contains detectors with different"
+            msg += f" sample rates ({rate_check}), cannot create a Focalplane"
+            msg += " object"
+            log.error(msg)
+            raise RuntimeError(msg)
+
+        if len(band_check) > 1:
+            msg = "Hardware instance contains detectors from different bands!"
+            msg += " Are you sure you want to create a single Focalplane with these?"
+            log.warning(msg)
+
+        fp = Focalplane(detector_data=det_table, sample_rate=rate_check.pop() * u.Hz)
+        fp.software_version_toast = self.data["software"]["toast"]
+        fp.software_version_litebirdms = self.data["software"]["litebirdms"]
+        fp.software_version_litebirdtask = self.data["software"]["litebirdtask"]
+
+        return fp
