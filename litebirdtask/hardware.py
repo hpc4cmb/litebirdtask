@@ -362,3 +362,4 @@ class Hardware(object):
         fp.software_version_litebirdtask = self.data["software"]["litebirdtask"]
 
         return fp
+
