@@ -53,5 +53,5 @@ def main():
     else:
         print(f"Creating output file {args.out}")
 
-    fp.write(args.out)
+    fp.save_hdf5(args.out)
 
