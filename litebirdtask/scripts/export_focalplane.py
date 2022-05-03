@@ -54,6 +54,6 @@ def main():
         print(f"Creating output file {args.out}")
 
     with H5File(args.out, "w",  force_serial=True) as f:
-            fp.save_hdf5(f.handle)
+        fp.save_hdf5(f.handle)
     
 
