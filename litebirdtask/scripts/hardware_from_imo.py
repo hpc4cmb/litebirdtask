@@ -9,9 +9,7 @@ import json
 import numpy as np
 import toml
 
-def get_wafer_dic (tele):
-
-    wnp = {
+wnp = {
             "LF1": 9,
             "LF2": 36,
             "MF1": 61,
@@ -21,7 +19,7 @@ def get_wafer_dic (tele):
             "HF3": 169,
         }
 
-    pix2w = {
+pix2w = {
             "LF1": ["LP1", "LP2"],
             "LF2": ["LP3", "LP4"],
             "MF1": ["MP1"],
@@ -31,8 +29,8 @@ def get_wafer_dic (tele):
             "HF3": ["HP3"],
         }
 
-    toast_keys = ['pixels', 'bands', 'telescopes', 'wafers', 'detectors']
-    pixmm = {
+toast_keys = ['pixels', 'bands', 'telescopes', 'wafers', 'detectors']
+pixmm = {
             "LP1": 32.0,
             "LP2": 32.0,
             "LP3": 16.0,
@@ -43,7 +41,7 @@ def get_wafer_dic (tele):
             "HP2": 6.6,
             "HP3": 5.7,
         }
-    pbd = {
+pbd = {
             "LP1": ["L1-040", "L1-060", "L1-078"],
             "LP2": ["L2-050", "L2-068", "L2-089"],
             "LP3": ["L3-068", "L3-089", "L3-119"],
@@ -54,6 +52,8 @@ def get_wafer_dic (tele):
             "HP2": ["H2-235", "H2-337"],
             "HP3": ["H3-402"],
         }
+
+def get_wafer_dic (tele):
 
 
     windx = 0
@@ -114,9 +114,15 @@ def main():
     parser.add_argument(
     "--hardware", required=True, default=None, help="Input json file"
     )
+    parser.add_argument(
+            "--output-directory",
+            required=False,
+            default="./",
+            help="path to the output directory",
+        )
     args = parser.parse_args()
 
-    print("Loading hardware file {}...".format(file), flush=True)
+    print("Loading hardware file {}...".format(args.hardware), flush=True)
     with open(args.hardware) as json_file:
         data = json.load(json_file)
 
@@ -180,10 +186,12 @@ def main():
                               'UID':data['data_files'][i]['uuid']
                              }
         if i - iold == channel_dic['number_of_detectors']:
-            print(f"Dumping {i-iold} detectors into {channel_dic['channel']}.toml.gz"  )
-            with open( f"{channel_dic['channel']}.toml.gz", "w") as f:
+            print(f"Dumping {i-iold} detectors into {args.output_directory}/{channel_dic['channel']}.toml.gz"  )
+            with open( f"{args.output_directory}/{channel_dic['channel']}.toml.gz", "w") as f:
                 toml.dump( newhw, f)
 
-            break 
 
     return
+
+
+main()
