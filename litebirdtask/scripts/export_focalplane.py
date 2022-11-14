@@ -8,7 +8,7 @@ import os
 import argparse
 
 from ..hardware import Hardware
-
+from toast.io import H5File
 
 def main():
     parser = argparse.ArgumentParser(
@@ -53,5 +53,7 @@ def main():
     else:
         print(f"Creating output file {args.out}")
 
-    fp.save_hdf5(args.out)
+    with H5File(args.out, "w",  force_serial=True) as f:
+        fp.save_hdf5(f.handle)
+    
 
