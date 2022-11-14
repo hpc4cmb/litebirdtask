@@ -9,6 +9,10 @@ import json
 import numpy as np
 import toml
 
+
+#the following dictionaries are kept from the scripts in litebirdms. The quantities are hardcoded  allow backward compatibility, with previous IMO files.
+
+## number of pixels per wafer type 
 wnp = {
     "LF1": 9,
     "LF2": 36,
@@ -17,8 +21,8 @@ wnp = {
     "HF1": 127,
     "HF2": 127,
     "HF3": 169,
-}
-
+} 
+#associate each wafer type to a pixel-type 
 pix2w = {
     "LF1": ["LP1", "LP2"],
     "LF2": ["LP3", "LP4"],
@@ -30,6 +34,7 @@ pix2w = {
 }
 
 toast_keys = ["pixels", "bands", "telescopes", "wafers", "detectors"]
+#size in mm of each pixel-type 
 pixmm = {
     "LP1": 32.0,
     "LP2": 32.0,
@@ -41,6 +46,7 @@ pixmm = {
     "HP2": 6.6,
     "HP3": 5.7,
 }
+#associate each pixel-type to the trichroic,dichroic, monochroic frequency band 
 pbd = {
     "LP1": ["L1-040", "L1-060", "L1-078"],
     "LP2": ["L2-050", "L2-068", "L2-089"],
