@@ -1,14 +1,18 @@
 # Copyright (c) 2015-2021 LiteBIRD Collaboration.
 # Full license can be found in the top level "LICENSE" file.
 """
-Plot a hardware model.
+Exporting a hardware model from LB IMO to be compatible with toast hardware.
 """
 
 import argparse
 import json
 import numpy as np
 import toml
+from litebirdms import __version__ as lbms_version
 
+from litebirdtask import __version__ as lbt_version
+
+from toast import __version__ as toast_version
 
 #the following dictionaries are kept from the scripts in litebirdms. The quantities are hardcoded  allow backward compatibility, with previous IMO files.
 
@@ -153,6 +157,7 @@ def main():
             "wafers": instrument_dic["wafers"],
             "platescale": instrument_dic["platescale_deg_mm"],
             "waferspace": instrument_dic["waferspace_mm"],
+            "samplerate":  instrument_dic['sampling_rate_hz']
         }
         newhw["pixels"][det_dic["pixtype"]] = {
             "bands": pbd[det_dic["pixtype"]],
@@ -188,6 +193,11 @@ def main():
             "orient": det_dic["orient"],
             "quat": det_dic["quat"],
             "UID": data["data_files"][i]["uuid"],
+        }
+        newhw["software"] = {
+        "litebirdms": lbms_version,
+        "litebirdtask": lbt_version,
+        "toast": toast_version,
         }
         if i - iold == channel_dic["number_of_detectors"]:
             print(

@@ -276,7 +276,7 @@ class Hardware(object):
 
         det_table = QTable(
             [
-                Column(name="name", length=n_det, dtype="S16", unit=None),
+                Column(name="name", length=n_det, dtype="S20", unit=None),
                 Column(
                     name="quat",
                     length=n_det,
@@ -305,7 +305,7 @@ class Hardware(object):
                 Column(name="pol", length=n_det, dtype="S2", unit=None),
                 Column(name="handed", length=n_det, dtype="S2", unit=None),
                 Column(name="orient", length=n_det, dtype="S2", unit=None),
-                Column(name="uid", length=n_det, dtype=np.uint64, unit=None),
+                Column(name="uid", length=n_det, dtype="S37", unit=None),
             ]
         )
 
