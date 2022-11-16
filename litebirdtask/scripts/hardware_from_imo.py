@@ -179,7 +179,7 @@ def main():
             "NET": channel_dic["net_detector_ukrts"],
             "fwhm": channel_dic["fwhm_arcmin"],
             "fknee": channel_dic["fknee_mhz"],
-            "fmin": channel_dic["fmin_hz"],
+            "fmin": channel_dic["fmin_hz"]*1e3, ## toast expects fknee and fmin to have the same units 
             "alpha": channel_dic["alpha"],
         }
 
