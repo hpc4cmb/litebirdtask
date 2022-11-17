@@ -276,7 +276,7 @@ class Hardware(object):
 
         det_table = QTable(
             [
-                Column(name="name", length=n_det, dtype="S20", unit=None),
+                Column(name="name", length=n_det, dtype="S22", unit=None),
                 Column(
                     name="quat",
                     length=n_det,
@@ -293,7 +293,7 @@ class Hardware(object):
                     name="psd_net",
                     length=n_det,
                     dtype=np.float64,
-                    unit=(u.K * np.sqrt(1.0 * u.second)),
+                    unit=(u.uK * np.sqrt(1.0 * u.second)),
                 ),
                 Column(name="bandcenter", length=n_det, dtype=np.float64, unit=u.GHz),
                 Column(name="bandwidth", length=n_det, dtype=np.float64, unit=u.GHz),
