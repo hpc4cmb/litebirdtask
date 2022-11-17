@@ -286,8 +286,8 @@ class Hardware(object):
                 ),
                 Column(name="pol_leakage", length=n_det, dtype=np.float64, unit=None),
                 Column(name="fwhm", length=n_det, dtype=np.float64, unit=u.arcmin),
-                Column(name="psd_fmin", length=n_det, dtype=np.float64, unit=u.Hz),
-                Column(name="psd_fknee", length=n_det, dtype=np.float64, unit=u.Hz),
+                Column(name="psd_fmin", length=n_det, dtype=np.float64, unit=u.mHz),
+                Column(name="psd_fknee", length=n_det, dtype=np.float64, unit=u.mHz),
                 Column(name="psd_alpha", length=n_det, dtype=np.float64, unit=None),
                 Column(
                     name="psd_net",
