@@ -342,7 +342,7 @@ class Hardware(object):
             det_table["psd_fmin"][idet] = bprops["fmin"] * 0.001 * u.Hz
             det_table["psd_fknee"][idet] = bprops["fknee"] * 0.001 * u.Hz
             det_table["psd_alpha"][idet] = bprops["alpha"]
-            det_table["psd_net"][idet] = bprops["NET"] * (u.K * np.sqrt(1.0 * u.second))
+            det_table["psd_net"][idet] = bprops["NET"] * (u.uK * np.sqrt(1.0 * u.second))
 
         if len(rate_check) > 1:
             msg = "Hardware instance contains detectors with different"
