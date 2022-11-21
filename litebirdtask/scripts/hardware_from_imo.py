@@ -192,7 +192,7 @@ def main():
             "pol": det_dic["pol"],
             "orient": det_dic["orient"],
             "quat": det_dic["quat"],
-            "UID": data["data_files"][i]["uuid"],
+            "IMO_UID": data["data_files"][i]["uuid"],
         }
         newhw["software"] = {
         "litebirdms": lbms_version,
