@@ -28,6 +28,7 @@ setup(
             "lbt_hardware_trim = litebirdtask.scripts.hardware_trim:main",
             "lbt_hardware_info = litebirdtask.scripts.hardware_info:main",
             "lbt_export_focalplane = litebirdtask.scripts.export_focalplane:main",
+            "lbt_hardware_from_imo =litebirdtask.scripts.hardware_from_imo:main"
         ]
     },
     license="BSD",

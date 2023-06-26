@@ -276,7 +276,7 @@ class Hardware(object):
 
         det_table = QTable(
             [
-                Column(name="name", length=n_det, dtype="S16", unit=None),
+                Column(name="name", length=n_det, dtype="S22", unit=None),
                 Column(
                     name="quat",
                     length=n_det,
@@ -286,14 +286,14 @@ class Hardware(object):
                 ),
                 Column(name="pol_leakage", length=n_det, dtype=np.float64, unit=None),
                 Column(name="fwhm", length=n_det, dtype=np.float64, unit=u.arcmin),
-                Column(name="psd_fmin", length=n_det, dtype=np.float64, unit=u.Hz),
-                Column(name="psd_fknee", length=n_det, dtype=np.float64, unit=u.Hz),
+                Column(name="psd_fmin", length=n_det, dtype=np.float64, unit=u.mHz),
+                Column(name="psd_fknee", length=n_det, dtype=np.float64, unit=u.mHz),
                 Column(name="psd_alpha", length=n_det, dtype=np.float64, unit=None),
                 Column(
                     name="psd_net",
                     length=n_det,
                     dtype=np.float64,
-                    unit=(u.K * np.sqrt(1.0 * u.second)),
+                    unit=(u.uK * np.sqrt(1.0 * u.second)),
                 ),
                 Column(name="bandcenter", length=n_det, dtype=np.float64, unit=u.GHz),
                 Column(name="bandwidth", length=n_det, dtype=np.float64, unit=u.GHz),
@@ -305,7 +305,7 @@ class Hardware(object):
                 Column(name="pol", length=n_det, dtype="S2", unit=None),
                 Column(name="handed", length=n_det, dtype="S2", unit=None),
                 Column(name="orient", length=n_det, dtype="S2", unit=None),
-                Column(name="uid", length=n_det, dtype=np.uint64, unit=None),
+                Column(name="uid", length=n_det, dtype="S37", unit=None),
             ]
         )
 
@@ -342,7 +342,7 @@ class Hardware(object):
             det_table["psd_fmin"][idet] = bprops["fmin"] * 0.001 * u.Hz
             det_table["psd_fknee"][idet] = bprops["fknee"] * 0.001 * u.Hz
             det_table["psd_alpha"][idet] = bprops["alpha"]
-            det_table["psd_net"][idet] = bprops["NET"] * (u.K * np.sqrt(1.0 * u.second))
+            det_table["psd_net"][idet] = bprops["NET"] * (u.uK * np.sqrt(1.0 * u.second))
 
         if len(rate_check) > 1:
             msg = "Hardware instance contains detectors with different"
