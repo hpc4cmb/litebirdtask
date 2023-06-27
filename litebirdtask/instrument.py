@@ -194,6 +194,10 @@ def load_imo(
         detlist = list(sorted(odets.keys()))
         n_det = len(detlist)
 
+        if n_det == 0:
+            msg = f"Telescope {oname} has no detectors"
+            raise RuntimeError(msg)
+
         # Now go through the detectors polarization / orientation and set the gamma
         # and psi_pol angles...
 
@@ -202,7 +206,7 @@ def load_imo(
         if wafer_obs:
             chan = wafer_to_chan[oname]
             tel = chan_to_tel[chan]
-            tname = f"{tel}_{chan}_{wf}"
+            tname = f"{tel}_{chan}_{oname}"
         else:
             chan = oname
             tel = chan_to_tel[chan]

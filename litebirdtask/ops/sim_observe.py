@@ -137,6 +137,8 @@ class SimObserve(Operator):
             )
         if data.comm.comm_world is not None:
             obs_tel = data.comm.comm_world.bcast(obs_tel, root=0)
+
+        print(f"IMO = {obs_tel}", flush=True)
         
         # Data distribution in the detector direction
         det_ranks = data.comm.group_size
@@ -156,6 +158,10 @@ class SimObserve(Operator):
             scan_seconds.append(
                 int((scan.stop - scan.start).total_seconds())
             )
+
+        print(f"mission start = {mission_start}")
+        print(f"schedule = {self.schedule.scans}")
+        print(f"schedule seconds = {scan_seconds}", flush=True)
 
         # Distribute the observing sessions uniformly among groups.  We take each scan and
         # weight it by the duration.
@@ -189,7 +195,8 @@ class SimObserve(Operator):
                     first += 1
                 start = first * incr + mission_start.timestamp()
                 scan_samples = 1 + int(rate * (scan.stop.timestamp() - start))
-                stop = (scan_samples - 1) * incr + mission_start.timestamp()
+                stop = (scan_samples - 1) * incr + start
+                print(f"{scan_samples} : {start:0.15e} {stop:0.15e}", flush=True)
 
                 # Get the detector sets
                 detsets = None
@@ -244,6 +251,8 @@ class SimObserve(Operator):
                         endpoint=True,
                         dtype=np.float64,
                     )
+
+                    print(f"stamps = {stamps}", flush=True)
 
                     # Get the motion of the site for these times.
                     position, velocity = tel.site.position_velocity(stamps)
