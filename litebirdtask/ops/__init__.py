@@ -3,4 +3,4 @@
 """LiteBIRD TOAST Operators.
 """
 
-from .sim_scan import SimScan
+from .sim_observe import SimObserve
