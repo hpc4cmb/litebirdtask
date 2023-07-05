@@ -23,7 +23,7 @@ from toast.observation import Observation, Session
 from toast.observation import default_values as defaults
 from toast.schedule import SatelliteSchedule
 
-from ..instrument import load_imo
+from ..instrument import load_imo, LitebirdSchedule
 
 
 @trait_docs
@@ -39,19 +39,37 @@ class SimObserve(Operator):
 
     imo_file = Unicode(None, allow_none=True, help="The path to an IMO file.")
 
-    select_telescope = Unicode(None, allow_none=True, help="Regular expression matching on telescope name")
-
-    select_channel = Unicode(None, allow_none=True, help="Regular expression matching on channel name")
-    
-    select_wafer = Unicode(None, allow_none=True, help="Regular expression matching on wafer name")
-    
-    select_pixel = Unicode(None, allow_none=True, help="Regular expression matching on pixel name")
-    
-    select_detector = Unicode(None, allow_none=True, help="Regular expression matching on detector name")
-
-    schedule = Instance(
-        klass=SatelliteSchedule, allow_none=True, help="Instance of a SatelliteSchedule"
+    select_telescope = Unicode(
+        None, allow_none=True, help="Regular expression matching on telescope name"
     )
+
+    select_channel = Unicode(
+        None, allow_none=True, help="Regular expression matching on channel name"
+    )
+
+    select_wafer = Unicode(
+        None, allow_none=True, help="Regular expression matching on wafer name"
+    )
+
+    select_pixel = Unicode(
+        None, allow_none=True, help="Regular expression matching on pixel name"
+    )
+
+    select_detector = Unicode(
+        None, allow_none=True, help="Regular expression matching on detector name"
+    )
+
+    mission_start = Unicode(
+        "2031-03-21T00:00:00+00:00",
+        help="The mission start time as an ISO 8601 format string",
+    )
+
+    observation_time = Quantity(
+        60.0 * u.minute,
+        help="The time span of each science observation",
+    )
+
+    num_observation = Int(1, help="The number of observations")
 
     detset_key = Unicode(
         None,
@@ -68,7 +86,7 @@ class SimObserve(Operator):
     )
 
     hwp_angle = Unicode(
-        None, allow_none=True, help="Observation shared key for HWP angle"
+        defaults.hwp_angle, allow_none=True, help="Observation shared key for HWP angle"
     )
 
     boresight = Unicode(
@@ -94,23 +112,15 @@ class SimObserve(Operator):
         allow_none=True,
         help="Observation detdata key for flags to initialize",
     )
-    
-    wafer_obs = Bool(False, help="If True, split detectors into observations by wafer, not channel")
+
+    wafer_obs = Bool(
+        False, help="If True, split detectors into observations by wafer, not channel"
+    )
 
     distribute_time = Bool(
         False,
         help="Distribute observation data along the time axis rather than detector axis",
     )
-
-    @traitlets.validate("schedule")
-    def _check_schedule(self, proposal):
-        sch = proposal["value"]
-        if sch is not None:
-            if not isinstance(sch, SatelliteSchedule):
-                raise traitlets.TraitError(
-                    "schedule must be an instance of a SatelliteSchedule"
-                )
-        return sch
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -122,11 +132,12 @@ class SimObserve(Operator):
             msg = "Detectors should be selected through the IMO, "
             msg += "not passed as a function argument."
             raise RuntimeError(msg)
-    
+
         # Load the IMO
         obs_tel = None
+        scan_props = None
         if data.comm.world_rank == 0:
-            obs_tel = load_imo(
+            scan_props, obs_tel = load_imo(
                 self.imo_file,
                 telescope=self.select_telescope,
                 channel=self.select_channel,
@@ -137,30 +148,35 @@ class SimObserve(Operator):
             )
         if data.comm.comm_world is not None:
             obs_tel = data.comm.comm_world.bcast(obs_tel, root=0)
+            scan_props = data.comm.comm_world.bcast(scan_props, root=0)
 
-        print(f"IMO = {obs_tel}", flush=True)
-        
         # Data distribution in the detector direction
         det_ranks = data.comm.group_size
         if self.distribute_time:
             det_ranks = 1
 
+        # Create the schedule
+        schedule = LitebirdSchedule(
+            scan_props,
+            datetime.fromisoformat(self.mission_start),
+            self.observation_time,
+            num_obs=self.num_observation,
+        )
+        print(schedule)
+
         # Distribute the schedule based on the time covered by each scan.
         # The global start is the beginning of the first scan.
 
-        mission_start = self.schedule.scans[0].start
-
-        if len(self.schedule.scans) == 0:
+        if len(schedule.scans) == 0:
             raise RuntimeError("Schedule has no scans!")
-        
-        scan_seconds = list()
-        for scan in self.schedule.scans:
-            scan_seconds.append(
-                int((scan.stop - scan.start).total_seconds())
-            )
+        schedule_start = schedule.scans[0].start
 
-        print(f"mission start = {mission_start}")
-        print(f"schedule = {self.schedule.scans}")
+        scan_seconds = list()
+        for scan in schedule.scans:
+            scan_seconds.append(int((scan.stop - scan.start).total_seconds()))
+
+        print(f"mission start = {schedule_start}")
+        print(f"schedule = {schedule.scans}")
         print(f"schedule seconds = {scan_seconds}", flush=True)
 
         # Distribute the observing sessions uniformly among groups.  We take each scan and
@@ -169,9 +185,9 @@ class SimObserve(Operator):
         groupdist = distribute_discrete(scan_seconds, data.comm.ngroups)
         group_firstobs = groupdist[data.comm.group][0]
         group_numobs = groupdist[data.comm.group][1]
-        
+
         for obindx in range(group_firstobs, group_firstobs + group_numobs):
-            scan = self.schedule.scans[obindx]
+            scan = schedule.scans[obindx]
             ses_start = scan.start.timestamp()
             ses_stop = scan.stop.timestamp()
 
@@ -189,11 +205,11 @@ class SimObserve(Operator):
                 rate = focalplane.sample_rate.to_value(u.Hz)
                 incr = 1.0 / rate
 
-                ffirst = rate * (scan.start - mission_start).total_seconds()
+                ffirst = rate * (scan.start - schedule_start).total_seconds()
                 first = int(ffirst)
                 if ffirst - first > 1.0e-3 * incr:
                     first += 1
-                start = first * incr + mission_start.timestamp()
+                start = first * incr + schedule_start.timestamp()
                 scan_samples = 1 + int(rate * (scan.stop.timestamp() - start))
                 stop = (scan_samples - 1) * incr + start
                 print(f"{scan_samples} : {start:0.15e} {stop:0.15e}", flush=True)

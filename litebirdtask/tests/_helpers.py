@@ -48,8 +48,6 @@ def create_scanning(
     wafer="L00",
     session_per_group=1,
     session_time=10.0 * u.minute,
-    prec_period=10 * u.minute,
-    spin_period=1 * u.minute,
 ):
     """Create a data object with a simulated scanning schedule.
 
@@ -67,24 +65,15 @@ def create_scanning(
     toastcomm = create_comm(mpicomm)
     data = toast.Data(toastcomm)
 
-    # Create a schedule
-
-    sch = create_satellite_schedule(
-        prefix="test_",
-        mission_start=datetime(2025, 2, 23),
-        observation_time=session_time,
-        gap_time=0 * u.minute,
-        num_observations=(toastcomm.ngroups * session_per_group),
-        prec_period=prec_period,
-        spin_period=spin_period,
-    )
+    # Create the scanning data
 
     sim_obs = ops.SimObserve(
         imo_file=imo_path,
         select_telescope=tel,
         select_channel=channel,
         select_wafer=wafer,
-        schedule=sch,
+        observation_time=session_time,
+        num_observation=(toastcomm.ngroups * session_per_group),
         detset_key="pixel",
     )
     sim_obs.apply(data)

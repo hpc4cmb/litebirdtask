@@ -37,7 +37,7 @@ class SimObserveTest(MPITestCase):
             print("'LB_IMO_FILE' not in environment, skipping tests")
             return
         
-        imo = load_imo(
+        scan_props, imo = load_imo(
             self.imo_path,
             telescope="MFT",
             channel="M2-119",
@@ -76,7 +76,7 @@ class SimObserveTest(MPITestCase):
             face_color=face_color,
             pol_color=pol_color,
             show_labels=True,
-            xieta=True,
+            xieta=False,
             outfile=os.path.join(self.outdir, "imo_test.pdf")
         )
 
@@ -88,13 +88,13 @@ class SimObserveTest(MPITestCase):
         data = create_scanning(
             self.comm,
             self.imo_path,
-            tel="MFT",
-            channel="M2-119",
+            # tel="MFT",
+            # channel="M2-119",
+            tel="LFT",
+            channel="L1-040",
             wafer=None,
             session_per_group=10,
-            session_time=10.0 * u.minute,
-            prec_period=10 * u.minute,
-            spin_period=1 * u.minute,
+            session_time=60.0 * u.minute,
         )
         
         data.info()
@@ -106,15 +106,16 @@ class SimObserveTest(MPITestCase):
         )
         plotdetpointing.apply(data)
         if data.comm.world_rank == 0:
-            n_debug = 10
+            n_debug = 1000
             bquat = np.array(data.obs[0].shared[defaults.boresight_radec][0:n_debug, :])
             dquat = data.obs[0].detdata["pquats"][:, 0:n_debug, :]
             invalid = np.array(data.obs[0].shared[defaults.shared_flags][0:n_debug])
             invalid &= defaults.shared_mask_invalid
             valid = np.logical_not(invalid)
             outfile = os.path.join(self.outdir, "pointing.pdf")
+            plot_slc = slice(0, n_debug, 100)
             plot_projected_quats(
-                outfile, qbore=bquat, qdet=dquat, valid=valid, scale=1.0
+                outfile, qbore=bquat, qdet=dquat, valid=plot_slc, scale=1.0
             )
 
         # Expand pointing and make a hit map.

@@ -7,7 +7,7 @@
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import re
 
 import numpy as np
@@ -15,6 +15,7 @@ import numpy as np
 import astropy.units as u
 from astropy.table import QTable, Column
 from toast.instrument import Focalplane, SpaceSite, Telescope
+from toast.schedule import SatelliteSchedule, SatelliteScan
 from toast.utils import Logger
 
 
@@ -68,8 +69,8 @@ def load_imo(
             wafer.  Default is to split by telescope-channel.
 
     Returns:
-        (list):  A list of Telescope objects, each suitable for creating
-            an Observation.
+        (tuple):  A tuple containing the IMO scanning parameters and a list of 
+            Telescope objects, each suitable for creating an Observation.
 
     """
     if telescope is None:
@@ -116,8 +117,19 @@ def load_imo(
         "psd_thermalbath_corr_ukcmb^2",
         "psd_thermalbath_uncorr_ukcmb^2",
     ]
+    scan_keys = [
+        "spin_sun_angle_deg",
+        "precession_period_min",
+        "spin_rate_rpm",
+        "mission_duration_year",
+        "observation_duty_cycle",
+        "cosmic_ray_loss",
+        "margin",
+        "detector_yield",
+    ]
     # Do one pass to extract all telescope and channel info
     tel_data = dict()
+    scan_data = None
     chan_data = dict()
     chan_to_tel = dict()
     for iobj, obj in enumerate(imo["data_files"]):
@@ -133,6 +145,8 @@ def load_imo(
             name = obj["metadata"]["channel"]
             props = {x: obj["metadata"][x] for x in chan_keys}
             chan_data[name] = props
+        elif obj["name"] == "scanning_parameters":
+            scan_data = {x: obj["metadata"][x] for x in scan_keys}
 
     # Now go through detectors
     det_keys = [
@@ -264,4 +278,73 @@ def load_imo(
         tele.boresight_rotangle = u.Quantity(tel_data[tel]["boresight_rotangle_deg"], unit=u.degree)
         tele.spin_rotangle = u.Quantity(tel_data[tel]["spin_rotangle_deg"], unit=u.degree)
         obs_tel.append(tele)
-    return obs_tel
+    return scan_data, obs_tel
+
+
+class LitebirdSchedule(SatelliteSchedule):
+
+    def __init__(
+        self, 
+        scan_props, 
+        mission_start, 
+        observation_time, 
+        num_obs=None,
+    ):
+        log = Logger.get()
+        spin_rate_rpm = scan_props["spin_rate_rpm"]
+        spin_period = (1.0 / spin_rate_rpm) * u.minute
+        duty_cycle = scan_props["observation_duty_cycle"]
+        duration = scan_props["mission_duration_year"] * u.year
+        precession_period = scan_props["precession_period_min"] * u.minute
+
+        obs_seconds = observation_time.to_value(u.second)
+        gap_seconds = (1.0 - duty_cycle) * obs_seconds / duty_cycle
+        total_seconds = obs_seconds + gap_seconds
+
+        if num_obs is None:
+            # Simulating the full mission
+            num_obs = int(duration.to_value(u.second) / total_seconds)
+        else:
+            if num_obs * total_seconds > duration.to_value(u.second):
+                new_num_obs = int(duration.to_value(u.second) / total_seconds)
+                msg = f"Simulating {num_obs} observations of {total_seconds:0.2e}"
+                msg += f" seconds each exceeds mission duration.  "
+                msg += f"Using {new_num_obs} instead"
+                num_obs = new_num_obs
+                log.warning(msg)
+        
+        if mission_start.tzinfo is None:
+            msg = f"Mission start time '{mission_start}' is not timezone-aware.  Assuming UTC."
+            log.warning(msg)
+            mission_start = mission_start.replace(tzinfo=timezone.utc)
+
+        obs = timedelta(seconds=obs_seconds)
+        gap = timedelta(seconds=gap_seconds)
+        epsilon = timedelta(seconds=0)
+        if gap_seconds == 0:
+            # If there is no gap, we add a tiny break (much less than one sample for any
+            # reasonable experiment) so that the start time of one observation is never
+            # identical to the stop time of the previous one.
+            epsilon = timedelta(microseconds=2)
+
+        total = obs + gap
+
+        scans = list()
+        for sc in range(num_obs):
+            start = sc * total + mission_start
+            stop = start + obs - epsilon
+            name = "{}{:06d}_{}".format("LB_", sc, start.isoformat(timespec="minutes"))
+            scans.append(
+                SatelliteScan(
+                    name=name,
+                    start=start,
+                    stop=stop,
+                    prec_period=precession_period,
+                    spin_period=spin_period,
+                )
+            )
+        super().__init__(
+            scans=scans,
+            site_name="LiteBIRD",
+            telescope_name="LiteBIRD",
+        )
