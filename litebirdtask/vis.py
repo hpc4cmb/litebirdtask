@@ -222,16 +222,18 @@ class clr:
         self.ENDC = ""
 
 
-def summary_text(hw):
-    """Print a textual summary of a hardware configuration.
+def summary_text(scan_props, obs_tele):
+    """Print a textual summary of the detectors included in a job.
 
     Args:
-        hw (Hardware): A hardware dictionary.
+        scan_props (dict):  The scan properties returned by load_imo()
+        obs_tele (list): A list of per-observation Telescope instances.
 
     Returns:
         None
 
     """
+    
     for obj, props in hw.data.items():
         nsub = len(props)
         print(
