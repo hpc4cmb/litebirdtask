@@ -233,25 +233,46 @@ def summary_text(scan_props, obs_tele):
         None
 
     """
-    
-    for obj, props in hw.data.items():
-        nsub = len(props)
-        print(
-            "{}{:<12}: {}{:5d} objects{}".format(
-                clr.WHITE, obj, clr.RED, nsub, clr.ENDC
-            )
-        )
-        if nsub <= 2000:
-            line = ""
-            for k in list(props.keys()):
-                if (len(line) + len(k)) > 72:
-                    print("    {}{}{}".format(clr.BLUE, line, clr.ENDC))
-                    line = ""
-                line = "{}{}, ".format(line, k)
-            if len(line) > 0:
-                print("    {}{}{}".format(clr.BLUE, line.rstrip(", "), clr.ENDC))
-        else:
-            # Too many to print!
-            print("    {}(Too many to print){}".format(clr.BLUE, clr.ENDC))
+    tele_list = set()
+    channel_list = set()
+    wafer_list = set()
+    det_list = set()
+    for tobs in obs_tele:
+        fp = tobs.focalplane
+        detinfo = fp.detector_data
+        tele_list.add(detinfo["telescope"])
+        wafer_list.add(detinfo["wafer"])
+        channel_list.add(detinfo["channel"])
+        det_list.add(detinfo["name"])
+    tele_list = list(sorted(tele_list))
+    channel_list = list(sorted(channel_list))
+    wafer_list = list(sorted(wafer_list))
+    det_list = list(sorted(det_list))
 
-    return
+    def _display(objname, listing):
+        nobj = len(listing)
+        print(
+            f"{clr.WHITE}{objname:<12}: {clr.RED}{nobj:5d} objects{clr.ENDC}"
+        )
+        if nobj <= 2000:
+            line = ""
+            for obj in listing:
+                if (len(line) + len(obj)) > 72:
+                    print(f"    {clr.BLUE}{line}{clr.ENDC}")
+                    line = ""
+                line = f"{line}{obj}, "
+            if len(line) > 0:
+                print(f"    {clr.BLUE}{line.rstrip(', ')}{clr.ENDC}")
+        else:
+            print(f"    {clr.BLUE}(Too many to print){clr.ENDC}")
+
+    print(
+        f"{clr.WHITE}Scanning Properties:{clr.ENDC}"
+    )
+    for k, v in scan_props.items():
+        print(f"  {clr.BLUE}{k} = {v}{clr.ENDC}")
+
+    _display("Telescopes", tele_list)
+    _display("Channels", channel_list)
+    _display("Wafers", wafer_list)
+    _display("Detectors", det_list)

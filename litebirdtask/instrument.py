@@ -69,7 +69,7 @@ def load_imo(
             wafer.  Default is to split by telescope-channel.
 
     Returns:
-        (tuple):  A tuple containing the IMO scanning parameters and a list of 
+        (tuple):  A tuple containing the IMO scanning parameters and a list of
             Telescope objects, each suitable for creating an Observation.
 
     """
@@ -225,10 +225,15 @@ def load_imo(
             chan = oname
             tel = chan_to_tel[chan]
             tname = f"{tel}_{chan}"
-        
+
         det_table = QTable(
             [
                 Column(name="name", data=detlist),
+                Column(
+                    name="telescope",
+                    data=[chan_to_tel[odets[x]["channel"]] for x in detlist],
+                ),
+                Column(name="channel", data=[odets[x]["channel"] for x in detlist]),
                 Column(name="wafer", data=[odets[x]["wafer"] for x in detlist]),
                 Column(name="pixel", data=[odets[x]["pixel"] for x in detlist]),
                 Column(name="pixtype", data=[odets[x]["pixtype"] for x in detlist]),
@@ -243,13 +248,15 @@ def load_imo(
                 ),
                 Column(name="bandcenter", length=n_det, unit=u.GHz),
                 Column(name="bandwidth", length=n_det, unit=u.GHz),
-                Column(name="psd_net", length=n_det, unit=(u.K * np.sqrt(1.0 * u.second))),
+                Column(
+                    name="psd_net", length=n_det, unit=(u.K * np.sqrt(1.0 * u.second))
+                ),
                 Column(name="psd_fknee", length=n_det, unit=u.Hz),
                 Column(name="psd_fmin", length=n_det, unit=u.Hz),
                 Column(name="psd_alpha", data=[odets[x]["alpha"] for x in detlist]),
                 Column(name="pol", data=[odets[x]["pol"] for x in detlist]),
                 Column(name="orient", data=[odets[x]["orient"] for x in detlist]),
-                Column(name="psd_dac",length=n_det, unit=u.K**2),
+                Column(name="psd_dac", length=n_det, unit=u.K**2),
                 Column(name="pol_sensitivity", length=n_det, unit=u.K / u.arcmin),
             ]
         )
@@ -259,35 +266,46 @@ def load_imo(
             det_table[idet]["fwhm"] = odets[det]["fwhm_arcmin"] * u.arcmin
             det_table[idet]["bandcenter"] = odets[det]["bandcenter_ghz"] * u.GHz
             det_table[idet]["bandwidth"] = odets[det]["bandwidth_ghz"] * u.GHz
-            det_table[idet]["psd_net"] = odets[det]["net_ukrts"] * 1.0e-6 * (u.K * np.sqrt(1.0 * u.second))
+            det_table[idet]["psd_net"] = (
+                odets[det]["net_ukrts"] * 1.0e-6 * (u.K * np.sqrt(1.0 * u.second))
+            )
             det_table[idet]["psd_fknee"] = odets[det]["fknee_mhz"] * 1.0e-3 * u.Hz
             det_table[idet]["psd_fmin"] = odets[det]["fmin_hz"] * u.Hz
-            det_table[idet]["psd_dac"] = odets[det]["psd_dac_ukcmb^2"] * 1.0e-12 * (u.K**2)
-            det_table[idet]["pol_sensitivity"] = odets[det]["pol_sensitivity_ukarcmin"] * 1.0e-6 * (u.K / u.arcmin)
+            det_table[idet]["psd_dac"] = (
+                odets[det]["psd_dac_ukcmb^2"] * 1.0e-12 * (u.K**2)
+            )
+            det_table[idet]["pol_sensitivity"] = (
+                odets[det]["pol_sensitivity_ukarcmin"] * 1.0e-6 * (u.K / u.arcmin)
+            )
 
         site = LitebirdSite()
         focalplane = Focalplane(
             detector_data=det_table,
             sample_rate=rate,
         )
-        
+
         tele = Telescope(tname, focalplane=focalplane, site=site)
         tele.hwp_rpm = tel_data[tel]["hwp_rpm"]
         tele.sampling_rate = u.Quantity(tel_data[tel]["sampling_rate_hz"], unit=u.Hz)
-        tele.spin_boresight_angle = u.Quantity(tel_data[tel]["spin_boresight_angle_deg"], unit=u.degree)
-        tele.boresight_rotangle = u.Quantity(tel_data[tel]["boresight_rotangle_deg"], unit=u.degree)
-        tele.spin_rotangle = u.Quantity(tel_data[tel]["spin_rotangle_deg"], unit=u.degree)
+        tele.spin_boresight_angle = u.Quantity(
+            tel_data[tel]["spin_boresight_angle_deg"], unit=u.degree
+        )
+        tele.boresight_rotangle = u.Quantity(
+            tel_data[tel]["boresight_rotangle_deg"], unit=u.degree
+        )
+        tele.spin_rotangle = u.Quantity(
+            tel_data[tel]["spin_rotangle_deg"], unit=u.degree
+        )
         obs_tel.append(tele)
     return scan_data, obs_tel
 
 
 class LitebirdSchedule(SatelliteSchedule):
-
     def __init__(
-        self, 
-        scan_props, 
-        mission_start, 
-        observation_time, 
+        self,
+        scan_props,
+        mission_start,
+        observation_time,
         num_obs=None,
     ):
         log = Logger.get()
@@ -312,7 +330,7 @@ class LitebirdSchedule(SatelliteSchedule):
                 msg += f"Using {new_num_obs} instead"
                 num_obs = new_num_obs
                 log.warning(msg)
-        
+
         if mission_start.tzinfo is None:
             msg = f"Mission start time '{mission_start}' is not timezone-aware.  Assuming UTC."
             log.warning(msg)
