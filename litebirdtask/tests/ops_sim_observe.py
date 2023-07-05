@@ -42,7 +42,6 @@ class SimObserveTest(MPITestCase):
             telescope="MFT",
             channel="M2-119",
         )
-        print(imo)
 
         first_fp = imo[0].focalplane
         
@@ -97,8 +96,6 @@ class SimObserveTest(MPITestCase):
             session_time=60.0 * u.minute,
         )
         
-        data.info()
-
         # Plot some pointing
         plotdetpointing = toast.ops.PointingDetectorSimple(
             boresight=defaults.boresight_radec,

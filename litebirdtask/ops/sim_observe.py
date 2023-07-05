@@ -162,7 +162,6 @@ class SimObserve(Operator):
             self.observation_time,
             num_obs=self.num_observation,
         )
-        print(schedule)
 
         # Distribute the schedule based on the time covered by each scan.
         # The global start is the beginning of the first scan.
@@ -174,10 +173,6 @@ class SimObserve(Operator):
         scan_seconds = list()
         for scan in schedule.scans:
             scan_seconds.append(int((scan.stop - scan.start).total_seconds()))
-
-        print(f"mission start = {schedule_start}")
-        print(f"schedule = {schedule.scans}")
-        print(f"schedule seconds = {scan_seconds}", flush=True)
 
         # Distribute the observing sessions uniformly among groups.  We take each scan and
         # weight it by the duration.
@@ -212,7 +207,6 @@ class SimObserve(Operator):
                 start = first * incr + schedule_start.timestamp()
                 scan_samples = 1 + int(rate * (scan.stop.timestamp() - start))
                 stop = (scan_samples - 1) * incr + start
-                print(f"{scan_samples} : {start:0.15e} {stop:0.15e}", flush=True)
 
                 # Get the detector sets
                 detsets = None
@@ -267,8 +261,6 @@ class SimObserve(Operator):
                         endpoint=True,
                         dtype=np.float64,
                     )
-
-                    print(f"stamps = {stamps}", flush=True)
 
                     # Get the motion of the site for these times.
                     position, velocity = tel.site.position_velocity(stamps)

@@ -19,7 +19,6 @@ def add_simple_noise_operators(operators):
 
 
 def add_noise_operators(operators):
-    operators.append(toast.ops.DefaultNoiseModel(name="default_model"))
     operators.append(
         toast.ops.NoiseEstim(
             name="noise_estim",

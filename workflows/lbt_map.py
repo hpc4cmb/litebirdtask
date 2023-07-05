@@ -85,17 +85,11 @@ def main():
     operators = list()
     templates = list()
 
-    # Data loading
-    workflow.add_data_operators(operators)
-
     # Default noise model
     workflow.add_simple_noise_operators(operators)
 
     # Pointing model
     workflow.add_pointing_operators(operators)
-
-    # Filtering
-    workflow.add_filter_operators(operators)
 
     # Noise model
     workflow.add_noise_operators(operators)
@@ -117,7 +111,6 @@ def main():
 
     workflow.run_simple_models(job, args, data)
     workflow.select_pointing(job, args, data)
-    workflow.run_filtering(job, args, data)
     workflow.run_noise_estimation(job, args, data)
     workflow.run_mapmaking(job, args, data)
 

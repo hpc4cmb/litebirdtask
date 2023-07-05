@@ -20,28 +20,28 @@ def main():
     parser.add_argument("imo", type=str, help="IMO file")
 
     parser.add_argument(
-        "telescope", 
+        "--telescope", 
         type=str,
         default=None,
         help="Telescope selection as a regular expression"
     )
 
     parser.add_argument(
-        "channel", 
+        "--channel", 
         type=str,
         default=None,
         help="Channel selection as a regular expression"
     )
 
     parser.add_argument(
-        "wafer", 
+        "--wafer", 
         type=str,
         default=None,
         help="Wafer selection as a regular expression"
     )
 
     parser.add_argument(
-        "detector", 
+        "--detector", 
         type=str,
         default=None,
         help="detector selection as a regular expression"

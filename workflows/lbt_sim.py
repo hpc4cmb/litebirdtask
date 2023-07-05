@@ -46,8 +46,6 @@ def parse_config(operators, templates, comm):
         help="Make additional plots / checks for debugging",
     )
 
-    workflow.add_data_args(parser)
-
     # Build a config dictionary starting from the operator defaults, overriding with any
     # config files specified with the '--config' commandline option, followed by any
     # individually specified parameter overrides.
@@ -95,16 +93,13 @@ def main():
     workflow.add_sim_observe_operators(operators)
 
     # Simulated data
-    workflow.add_sim_data_operators(operators)
+    workflow.add_sim_operators(operators)
 
     # Default noise model
     workflow.add_simple_noise_operators(operators)
 
     # Pointing model
     workflow.add_pointing_operators(operators)
-
-    # Filtering
-    workflow.add_filter_operators(operators)
 
     # Noise model
     workflow.add_noise_operators(operators)
@@ -131,7 +126,6 @@ def main():
     # Processing
 
     workflow.select_pointing(job, args, data)
-    workflow.run_filtering(job, args, data)
     workflow.run_noise_estimation(job, args, data)
     workflow.run_mapmaking(job, args, data)
 

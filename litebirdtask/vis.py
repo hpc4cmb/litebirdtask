@@ -240,10 +240,10 @@ def summary_text(scan_props, obs_tele):
     for tobs in obs_tele:
         fp = tobs.focalplane
         detinfo = fp.detector_data
-        tele_list.add(detinfo["telescope"])
-        wafer_list.add(detinfo["wafer"])
-        channel_list.add(detinfo["channel"])
-        det_list.add(detinfo["name"])
+        tele_list.update(detinfo["telescope"][:])
+        wafer_list.update(detinfo["wafer"][:])
+        channel_list.update(detinfo["channel"][:])
+        det_list.update(detinfo["name"][:])
     tele_list = list(sorted(tele_list))
     channel_list = list(sorted(channel_list))
     wafer_list = list(sorted(wafer_list))
@@ -252,7 +252,7 @@ def summary_text(scan_props, obs_tele):
     def _display(objname, listing):
         nobj = len(listing)
         print(
-            f"{clr.WHITE}{objname:<12}: {clr.RED}{nobj:5d} objects{clr.ENDC}"
+            f"{clr.GREEN}{objname:<12}: {clr.RED}{nobj:5d} objects{clr.ENDC}"
         )
         if nobj <= 2000:
             line = ""
@@ -267,7 +267,7 @@ def summary_text(scan_props, obs_tele):
             print(f"    {clr.BLUE}(Too many to print){clr.ENDC}")
 
     print(
-        f"{clr.WHITE}Scanning Properties:{clr.ENDC}"
+        f"{clr.GREEN}Scanning Properties:{clr.ENDC}"
     )
     for k, v in scan_props.items():
         print(f"  {clr.BLUE}{k} = {v}{clr.ENDC}")
