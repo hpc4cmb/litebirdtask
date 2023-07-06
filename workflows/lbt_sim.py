@@ -116,12 +116,12 @@ def main():
 
     # Simulate observing
 
-    data = workflow.sim_observe(job, args, comm)
+    data = workflow.sim_observe(job, args, jobargs, comm)
 
     # Simulate data
 
     workflow.run_simple_models(job, args, data)
-    workflow.sim_data(job, args, comm)
+    workflow.sim_data(job, args, data)
 
     # Processing
 

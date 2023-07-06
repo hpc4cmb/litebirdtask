@@ -23,8 +23,8 @@ def add_noise_operators(operators):
         toast.ops.NoiseEstim(
             name="noise_estim",
             out_model="noise_est",
-            lagmax=2048,
-            nbin_psd=64,
+            lagmax=1024,
+            nbin_psd=128,
             nsum=1,
             naverage=64,
         )
@@ -82,7 +82,7 @@ def run_simple_models(job, args, data):
     job_ops.default_model.apply(data)
 
     # Set the default noise model to the nominal one.
-    job.map_noise_model = job_ops.default_model.out_model
+    job.map_noise_model = job_ops.default_model.noise_model
 
     timer.stop()
 

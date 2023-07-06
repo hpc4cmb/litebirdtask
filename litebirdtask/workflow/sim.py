@@ -40,14 +40,23 @@ def add_sim_operators(operators):
     )
 
 
-def sim_observe(job, args, data):
+def sim_observe(job, args, jobargs, comm):
     """Run simulated observing.
     """
     ops = job.operators
     if ops.sim_observe.imo_file is None:
         msg = f"You must set the {ops.sim_observe.name}.imo_file trait before running"
         raise RuntimeError(msg)
+    group_size = jobargs.group_size
+    if group_size is None:
+        group_size = 1
+        if comm is not None:
+            group_size = comm.size
+
+    toast_comm = toast.mpi.Comm(world=comm, groupsize=group_size)
+    data = toast.Data(comm=toast_comm)
     ops.sim_observe.apply(data)
+    return data
 
 
 def sim_data(job, args, data):
@@ -79,7 +88,7 @@ def sim_data(job, args, data):
     # Accumulate instrumental noise
     if ops.sim_noise.enabled:
         log.info_rank("Begin instrument noise simulation", comm=world_comm)
-        ops.sim_noise.noise_model = ops.default_model.out_model
+        ops.sim_noise.noise_model = ops.default_model.noise_model
         ops.sim_noise.det_data = defaults.det_data
         ops.sim_noise.apply(data)
         log.info_rank("Finished instrument noise sim in", comm=world_comm, timer=timer)
