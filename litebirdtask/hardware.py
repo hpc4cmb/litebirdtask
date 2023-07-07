@@ -305,7 +305,7 @@ class Hardware(object):
                 Column(name="pol", length=n_det, dtype="S2", unit=None),
                 Column(name="handed", length=n_det, dtype="S2", unit=None),
                 Column(name="orient", length=n_det, dtype="S2", unit=None),
-                Column(name="uid", length=n_det, dtype="S37", unit=None),
+                Column(name="IMO_uid", length=n_det, dtype="S37", unit=None),
             ]
         )
 
@@ -324,7 +324,7 @@ class Hardware(object):
             else:
                 det_table["handed"][idet] = "NA"
             det_table["orient"][idet] = dprops["orient"]
-            det_table["uid"][idet] = dprops["UID"]
+            det_table["IMO_uid"][idet] = dprops["IMO_UID"]
 
             # Get other props
             wprops = self.data["wafers"][dprops["wafer"]]
