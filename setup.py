@@ -24,17 +24,18 @@ setup(
     packages=find_packages(where="."),
     entry_points={
         "console_scripts": [
-            "lbt_hardware_plot = litebirdtask.scripts.hardware_plot:main",
-            "lbt_hardware_trim = litebirdtask.scripts.hardware_trim:main",
-            "lbt_hardware_info = litebirdtask.scripts.hardware_info:main",
-            "lbt_export_focalplane = litebirdtask.scripts.export_focalplane:main",
-            "lbt_hardware_from_imo =litebirdtask.scripts.hardware_from_imo:main"
+            "lbt_imo_plot = litebirdtask.scripts.imo_plot:main",
+            "lbt_imo_info = litebirdtask.scripts.imo_info:main",
         ]
     },
+    scripts=[
+        "workflows/lbt_sim.py",
+        "workflows/lbt_map.py",
+    ],
     license="BSD",
-    python_requires=">=3.7.0",
+    python_requires=">=3.8.0",
     setup_requires=["wheel"],
-    install_requires=["toml",],
+    install_requires=["toast>=3.0.0a16",],
     cmdclass=versioneer.get_cmdclass(),
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -42,9 +43,10 @@ setup(
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: BSD License",
         "Operating System :: POSIX",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Scientific/Engineering :: Astronomy",
     ],
 )

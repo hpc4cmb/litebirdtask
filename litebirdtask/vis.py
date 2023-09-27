@@ -222,34 +222,57 @@ class clr:
         self.ENDC = ""
 
 
-def summary_text(hw):
-    """Print a textual summary of a hardware configuration.
+def summary_text(scan_props, obs_tele):
+    """Print a textual summary of the detectors included in a job.
 
     Args:
-        hw (Hardware): A hardware dictionary.
+        scan_props (dict):  The scan properties returned by load_imo()
+        obs_tele (list): A list of per-observation Telescope instances.
 
     Returns:
         None
 
     """
-    for obj, props in hw.data.items():
-        nsub = len(props)
-        print(
-            "{}{:<12}: {}{:5d} objects{}".format(
-                clr.WHITE, obj, clr.RED, nsub, clr.ENDC
-            )
-        )
-        if nsub <= 2000:
-            line = ""
-            for k in list(props.keys()):
-                if (len(line) + len(k)) > 72:
-                    print("    {}{}{}".format(clr.BLUE, line, clr.ENDC))
-                    line = ""
-                line = "{}{}, ".format(line, k)
-            if len(line) > 0:
-                print("    {}{}{}".format(clr.BLUE, line.rstrip(", "), clr.ENDC))
-        else:
-            # Too many to print!
-            print("    {}(Too many to print){}".format(clr.BLUE, clr.ENDC))
+    tele_list = set()
+    channel_list = set()
+    wafer_list = set()
+    det_list = set()
+    for tobs in obs_tele:
+        fp = tobs.focalplane
+        detinfo = fp.detector_data
+        tele_list.update(detinfo["telescope"][:])
+        wafer_list.update(detinfo["wafer"][:])
+        channel_list.update(detinfo["channel"][:])
+        det_list.update(detinfo["name"][:])
+    tele_list = list(sorted(tele_list))
+    channel_list = list(sorted(channel_list))
+    wafer_list = list(sorted(wafer_list))
+    det_list = list(sorted(det_list))
 
-    return
+    def _display(objname, listing):
+        nobj = len(listing)
+        print(
+            f"{clr.GREEN}{objname:<12}: {clr.RED}{nobj:5d} objects{clr.ENDC}"
+        )
+        if nobj <= 2000:
+            line = ""
+            for obj in listing:
+                if (len(line) + len(obj)) > 72:
+                    print(f"    {clr.BLUE}{line}{clr.ENDC}")
+                    line = ""
+                line = f"{line}{obj}, "
+            if len(line) > 0:
+                print(f"    {clr.BLUE}{line.rstrip(', ')}{clr.ENDC}")
+        else:
+            print(f"    {clr.BLUE}(Too many to print){clr.ENDC}")
+
+    print(
+        f"{clr.GREEN}Scanning Properties:{clr.ENDC}"
+    )
+    for k, v in scan_props.items():
+        print(f"  {clr.BLUE}{k} = {v}{clr.ENDC}")
+
+    _display("Telescopes", tele_list)
+    _display("Channels", channel_list)
+    _display("Wafers", wafer_list)
+    _display("Detectors", det_list)
